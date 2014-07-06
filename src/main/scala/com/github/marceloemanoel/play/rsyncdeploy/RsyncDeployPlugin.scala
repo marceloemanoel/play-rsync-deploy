@@ -1,5 +1,8 @@
 package com.github.marceloemanoel.play.rsyncdeploy
 
+import java.io.FileOutputStream
+import scala.language.reflectiveCalls
+
 import sbt.Keys._
 import sbt._
 
@@ -35,11 +38,14 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.serverAddress := "localhost",
     deploy.serverPort := Some(9000),
     deploy.remotePath := "~",
+
     deploy.keyDir := {
       val keyDir = (baseDirectory.value / "deployKeys")
       if (keyDir.exists) Some(keyDir) else None
     },
+
     deploy.keyFile := deploy.keyDir.value.map( _ / "production.pem"),
+
     deploy.defaultExcludes := Seq(
       (baseDirectory.value / ".idea"),
       (baseDirectory.value / ".idea_modules"),
@@ -47,10 +53,24 @@ object RsyncDeployPlugin extends AutoPlugin {
       (baseDirectory.value / "logs"),
       (baseDirectory.value / "test")
     ) ++ deploy.keyDir.value.map(List(_)).getOrElse(Nil),
+
     deploy.excludes := None,
     deploy.displayProgress := true,
+
     rsyncDeploy := {
       val log = streams.value.log
+      val runScript = baseDirectory.value / "run.sh"
+
+      if(!runScript.exists) {
+        log.info("Creating run.sh script")
+        copyRunScript(runScript)
+      }
+
+      if(!runScript.canExecute) {
+        log.info("Making run.sh executable.")
+        runScript.setExecutable(true)
+      }
+
       val serverPort = deploy.serverPort.value
 
       val rsync = Rsync(
@@ -63,10 +83,36 @@ object RsyncDeployPlugin extends AutoPlugin {
         excludes = deploy.defaultExcludes.value ++ deploy.excludes.value.getOrElse(Nil)
       )
 
-      rsync.execute() ! log
-      //      Process(List("ssh", "-i", deploy.keyFile.value.absolutePath,
-      //                        s"${deploy.userName.value}@${deploy.serverAddress.value}",
-      //                        s"~/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} $serverPort")) ! log
+      val exitCode = rsync.execute() ! log
+
+      if (exitCode != 0) {
+        fail
+      }
+      else {
+        Process(List("ssh", //"-i", deploy.keyFile.value.absolutePath,
+          s"${deploy.userName.value}@${deploy.serverAddress.value}",
+          s"~/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} ${serverPort.get}")) ! log
+      }
     }
   )
+
+  private def copyRunScript(target: File) = {
+    def use[T <: { def close(): Unit }](closable: T)(block: T => Unit) {
+      try {
+        block(closable)
+      }
+      finally {
+        closable.close()
+      }
+    }
+
+    use(getClass.getResourceAsStream("/run.sh")) { input =>
+      use(new FileOutputStream(target)) { output =>
+        val buffer = new Array[Byte](1024)
+        Iterator.continually(input.read(buffer))
+                .takeWhile(_ != -1)
+                .foreach { output.write(buffer, 0 , _) }
+      }
+    }
+  }
 }
