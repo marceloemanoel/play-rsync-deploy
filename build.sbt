@@ -1,12 +1,16 @@
 import bintray.Keys._
 
+import com.typesafe.sbt.SbtGit._
+
+versionWithGit
+
+git.baseVersion := "1.0"
+
 name := """play-rsync-deploy"""
 
 organization := """com.github.marceloemanoel"""
 
 sbtPlugin := true
-
-version := "1.0"
 
 scalaVersion := "2.10.4"
 
