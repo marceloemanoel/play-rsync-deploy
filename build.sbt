@@ -4,7 +4,7 @@ import com.typesafe.sbt.SbtGit._
 
 versionWithGit
 
-git.baseVersion := "1.0"
+git.baseVersion := "0.1"
 
 name := """play-rsync-deploy"""
 
