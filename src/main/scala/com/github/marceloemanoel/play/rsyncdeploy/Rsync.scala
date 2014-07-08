@@ -11,23 +11,22 @@ case class Rsync( remotePath: String,
                   excludes: Seq[File]) {
 
   def execute(): ProcessBuilder = {
-    val arguments = List("rsync", "-Chravzp", "--executability")
-    val finalArguments = arguments ++
-                         sshArguments.getOrElse(Nil) ++
-                         excludedFiles ++
-                         displayProgressOption ++
-                         List("--delete", s"${directory.absolutePath}", s"$username@$serverAddress:${remotePath}")
+    val arguments = List("rsync", "-Chravzp", "--executability") ++
+                    sshArguments ++
+                    excludedFiles ++
+                    displayProgressOption ++
+                    List("--delete", s"${directory.absolutePath}", s"$username@$serverAddress:${remotePath}")
 
-    println(finalArguments)
+    println(arguments.mkString(" "))
 
-    Process(finalArguments)
+    Process(arguments)
   }
 
 
-  private def sshArguments(): Option[Seq[String]] =
+  private def sshArguments(): Seq[String] =
     keyFile map { file =>
       List(s"-e ssh -i ${file.absolutePath}")
-    }
+    } getOrElse(Nil)
 
   private def excludedFiles() = {
     val exclusionString = excludes map { file => s"--exclude '${file.name}'" } mkString(" ")
