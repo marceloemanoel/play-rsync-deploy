@@ -8,7 +8,7 @@ case class Rsync( remotePath: String,
                   keyFile: Option[File],
                   directory: File,
                   displayProgress: Boolean,
-                  excludes: Seq[File]) {
+                  excludes: Seq[String]) {
 
   def execute(): ProcessBuilder = {
     val arguments = List("rsync", "-Chravzp", "--executability") ++
@@ -28,10 +28,8 @@ case class Rsync( remotePath: String,
       List(s"-e ssh -i ${file.absolutePath}")
     } getOrElse(Nil)
 
-  private def excludedFiles() = {
-    val exclusionString = excludes map { file => s"--exclude '${file.name}'" } mkString(" ")
-    exclusionString.split(" ")
-  }
+  private def excludedFiles() =
+    excludes.map(Seq("--exclude", _)).flatten
 
   private def displayProgressOption() =
     if (displayProgress) List("--progress") else Nil

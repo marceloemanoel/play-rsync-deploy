@@ -20,8 +20,8 @@ object RsyncDeployPlugin extends AutoPlugin {
       lazy val remotePath = settingKey[String]("path in the server to deploy the application")
       lazy val keyDir = settingKey[Option[File]]("Option defining the key file to connect to the server. Default: desployKeys")
       lazy val keyFile = settingKey[Option[File]]("Key file used for deploying")
-      lazy val excludes = settingKey[Option[Seq[File]]]("List of files or folders that should be excluded from deploy")
-      lazy val defaultExcludes = settingKey[Seq[File]]("Default deploy exclusion list of files and folders")
+      lazy val excludes = settingKey[Option[Seq[String]]]("List of files or folders that should be excluded from deploy")
+      lazy val defaultExcludes = settingKey[Seq[String]]("Default deploy exclusion list of files and folders")
       lazy val displayProgress = settingKey[Boolean]("Displays rync progress. Default true")
     }
 
@@ -49,13 +49,15 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.keyFile := deploy.keyDir.value.map( _ / "production.pem"),
 
     deploy.defaultExcludes := Seq(
-      (baseDirectory.value / ".idea"),
-      (baseDirectory.value / ".idea_modules"),
-      (baseDirectory.value / "target"),
-      (baseDirectory.value / "logs"),
-      (baseDirectory.value / "test"),
-      (baseDirectory.value / "RUNNING_PID")
-    ) ++ deploy.keyDir.value.map(List(_)).getOrElse(Nil),
+      ".idea",
+      ".idea_modules",
+      "target",
+      "project/project",
+      "project/target",
+      "logs",
+      "test",
+      "RUNNING_PID"
+    ) ++ deploy.keyDir.value.map(dir => List(dir.getName)).getOrElse(Nil),
 
     deploy.excludes := None,
     deploy.displayProgress := true,
