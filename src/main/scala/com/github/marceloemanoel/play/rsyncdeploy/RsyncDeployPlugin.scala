@@ -15,6 +15,7 @@ object RsyncDeployPlugin extends AutoPlugin {
       lazy val password = settingKey[Option[String]]("password used to connect to the server")
       lazy val passwordFile = settingKey[Option[File]]("one line file containing password")
       lazy val serverAddress = settingKey[String]("server address")
+      lazy val connectionPort = settingKey[Option[Int]]("Port used to connect to the server")
       lazy val serverPort = settingKey[Option[Int]]("Port that the project will run")
       lazy val remotePath = settingKey[String]("path in the server to deploy the application")
       lazy val keyDir = settingKey[Option[File]]("Option defining the key file to connect to the server. Default: desployKeys")
@@ -27,7 +28,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     lazy val rsyncDeploy = taskKey[Unit]("Connects to the server and send the files using rsync")
   }
 
-  import com.github.marceloemanoel.play.rsyncdeploy.RsyncDeployPlugin.autoImport._
+  import autoImport._
 
   override def trigger(): PluginTrigger = allRequirements
 
@@ -36,6 +37,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.password := None,
     deploy.passwordFile := None,
     deploy.serverAddress := "localhost",
+    deploy.connectionPort := None,
     deploy.serverPort := Some(9000),
     deploy.remotePath := "~",
 
@@ -51,7 +53,8 @@ object RsyncDeployPlugin extends AutoPlugin {
       (baseDirectory.value / ".idea_modules"),
       (baseDirectory.value / "target"),
       (baseDirectory.value / "logs"),
-      (baseDirectory.value / "test")
+      (baseDirectory.value / "test"),
+      (baseDirectory.value / "RUNNING_PID")
     ) ++ deploy.keyDir.value.map(List(_)).getOrElse(Nil),
 
     deploy.excludes := None,
@@ -89,9 +92,19 @@ object RsyncDeployPlugin extends AutoPlugin {
         fail
       }
       else {
-        Process(List("ssh", //"-i", deploy.keyFile.value.absolutePath,
-          s"${deploy.userName.value}@${deploy.serverAddress.value}",
-          s"~/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} ${serverPort.get}")) ! log
+        val ssh = SSH(
+          username = deploy.userName.value,
+          password = deploy.password.value,
+          identityFile = deploy.keyFile.value,
+          port = deploy.connectionPort.value,
+          host = deploy.serverAddress.value
+        )
+        val command = s"~/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} ${serverPort.get}"
+
+        val exitCode = ssh.execute(command) ! log
+        if(exitCode != 0) {
+          fail
+        }
       }
     }
   )
