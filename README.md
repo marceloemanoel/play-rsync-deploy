@@ -21,7 +21,7 @@ deploy.username := "username"
 
 deploy.password := Some("password")
 
-deploy.serverAdrres := "localhost"
+deploy.serverAddres := "localhost"
 ```
 
 And execute the task `rsyncDeploy`
