@@ -17,11 +17,11 @@ addSbtPlugin("com.github.marceloemanoel" %% "play-rsync-deploy" % "0.1")
 In your `build.sbt` file include your project's specific settings, for example:
 
 ```Scala
-deploy.username := "username"
+deploy.userName := "username"
 
 deploy.password := Some("password")
 
-deploy.serverAddres := "localhost"
+deploy.serverAddress := "localhost"
 ```
 
 And execute the task `rsyncDeploy`
