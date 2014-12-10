@@ -17,7 +17,7 @@ object RsyncDeployPlugin extends AutoPlugin {
       lazy val serverAddress = settingKey[String]("server address")
       lazy val connectionPort = settingKey[Option[Int]]("Port used to connect to the server")
       lazy val serverPort = settingKey[Option[Int]]("Port that the project will run")
-      lazy val remotePath = settingKey[String]("path in the server to deploy the application")
+      lazy val remotePath = settingKey[Option[String]]("path in the server to deploy the application. Default: /home/$userName")
       lazy val keyDir = settingKey[Option[File]]("Option defining the key file to connect to the server. Default: desployKeys")
       lazy val keyFile = settingKey[Option[File]]("Key file used for deploying")
       lazy val excludes = settingKey[Option[Seq[String]]]("List of files or folders that should be excluded from deploy")
@@ -39,7 +39,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.serverAddress := "localhost",
     deploy.connectionPort := None,
     deploy.serverPort := Some(9000),
-    deploy.remotePath := "~",
+    deploy.remotePath := Some("~"),
 
     deploy.keyDir := {
       val keyDir = (baseDirectory.value / "deployKeys")
@@ -79,7 +79,7 @@ object RsyncDeployPlugin extends AutoPlugin {
       val serverPort = deploy.serverPort.value
 
       val rsync = Rsync(
-        remotePath = deploy.remotePath.value,
+        remotePath = deploy.remotePath.value.get,
         serverAddress = deploy.serverAddress.value,
         username = deploy.userName.value,
         keyFile = deploy.keyFile.value,
@@ -101,7 +101,7 @@ object RsyncDeployPlugin extends AutoPlugin {
           port = deploy.connectionPort.value,
           host = deploy.serverAddress.value
         )
-        val command = s"~/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} ${serverPort.get}"
+        val command = s"${deploy.remotePath.value.get}/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} ${serverPort.get}"
 
         val exitCode = ssh.execute(command) ! log
         if(exitCode != 0) {
