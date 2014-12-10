@@ -63,7 +63,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.displayProgress := true,
 
     rsyncDeploy := {
-      val log = streams.value.log
+      implicit val log = streams.value.log
       val runScript = baseDirectory.value / "run.sh"
 
       if(!runScript.exists) {

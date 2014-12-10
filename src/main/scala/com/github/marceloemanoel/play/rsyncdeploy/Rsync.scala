@@ -10,14 +10,14 @@ case class Rsync( remotePath: String,
                   displayProgress: Boolean,
                   excludes: Seq[String]) {
 
-  def execute(): ProcessBuilder = {
+  def execute()(implicit logger:Logger): ProcessBuilder = {
     val arguments = List("rsync", "-Chravzp", "--executability") ++
                     sshArguments ++
                     excludedFiles ++
                     displayProgressOption ++
                     List("--delete", s"${directory.absolutePath}", s"$username@$serverAddress:${remotePath}")
 
-    println(arguments.mkString(" "))
+    logger.debug(arguments.mkString(" "))
 
     Process(arguments)
   }

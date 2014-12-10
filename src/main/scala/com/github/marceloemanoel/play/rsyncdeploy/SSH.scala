@@ -1,6 +1,6 @@
 package com.github.marceloemanoel.play.rsyncdeploy
 
-import sbt.{File, Process}
+import sbt.{Logger, File, Process}
 
 case class SSH(username: String,
                password: Option[String],
@@ -9,14 +9,14 @@ case class SSH(username: String,
                port: Option[Int]) {
 
 
-  def execute(command: String = "") = {
+  def execute(command: String = "")(implicit logger: Logger) = {
     val arguments = List("ssh") ++
                     identity ++
                     portNumber ++
                     userAtHost ++
                     List(command)
 
-    println(arguments)
+    logger.debug(arguments.mkString(" "))
 
     Process(arguments)
   }
