@@ -76,8 +76,6 @@ object RsyncDeployPlugin extends AutoPlugin {
         runScript.setExecutable(true)
       }
 
-      val serverPort = deploy.serverPort.value
-
       val rsync = Rsync(
         remotePath = deploy.remotePath.value.get,
         serverAddress = deploy.serverAddress.value,
@@ -101,7 +99,8 @@ object RsyncDeployPlugin extends AutoPlugin {
           port = deploy.connectionPort.value,
           host = deploy.serverAddress.value
         )
-        val command = s"${deploy.remotePath.value.get}/${baseDirectory.value.name}/run.sh ${baseDirectory.value.name} ${serverPort.get}"
+        val path = s"${deploy.remotePath.value.get}/${baseDirectory.value.name}"
+        val command = s"""APP_DIR=${baseDirectory.value.name} PORT=${deploy.serverPort.value.get} $path/run.sh"""
 
         val exitCode = ssh.execute(command) ! log
         if(exitCode != 0) {
