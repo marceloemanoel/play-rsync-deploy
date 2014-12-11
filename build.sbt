@@ -18,9 +18,11 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf
 
 publishMavenStyle := false
 
-repository in bintray := "play-rsync-deploy"
+repository in bintray := "sbt-plugin-releases"
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
+
+seq(bintraySettings:_*)
 
 seq(bintrayPublishSettings:_*)
 
