@@ -107,7 +107,7 @@ object RsyncDeployPlugin extends AutoPlugin {
           "PORT" -> deploy.serverPort.value.get.toString()
         ) ++ deploy.environmentVariables.value.getOrElse(Map.empty[String, String])
 
-        val command = s"""${variables.toSeq.map(v => s"$v._1=$v._2").mkString(" ")} $path/run.sh"""
+        val command = s"""${variables.toSeq.map(v => s"${v._1}=${v._2}").mkString(" ")} $path/run.sh"""
 
         val exitCode = ssh.execute(command) ! log
         if(exitCode != 0) {
