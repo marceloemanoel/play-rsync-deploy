@@ -13,4 +13,6 @@ killIfExists 'target/universal/stage/RUNNING_PID'
 killIfExists 'RUNNING_PID'
 
 ## run activator start
+export $OPTS
+
 ./activator start -Dhttp.port=$PORT

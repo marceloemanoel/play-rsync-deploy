@@ -17,6 +17,7 @@ object RsyncDeployPlugin extends AutoPlugin {
       lazy val serverAddress = settingKey[String]("server address")
       lazy val connectionPort = settingKey[Option[Int]]("Port used to connect to the server")
       lazy val serverPort = settingKey[Option[Int]]("Port that the project will run")
+      lazy val environmentVariables = settingKey[Option[Map[String, String]]]("Environment variables that must exist in the server. Default: None")
       lazy val remotePath = settingKey[Option[String]]("path in the server to deploy the application. Default: /home/$userName")
       lazy val keyDir = settingKey[Option[File]]("Option defining the key file to connect to the server. Default: desployKeys")
       lazy val keyFile = settingKey[Option[File]]("Key file used for deploying")
@@ -40,6 +41,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.connectionPort := None,
     deploy.serverPort := Some(9000),
     deploy.remotePath := Some("~"),
+    deploy.environmentVariables := None,
 
     deploy.keyDir := {
       val keyDir = (baseDirectory.value / "deployKeys")
@@ -100,7 +102,12 @@ object RsyncDeployPlugin extends AutoPlugin {
           host = deploy.serverAddress.value
         )
         val path = s"${deploy.remotePath.value.get}/${baseDirectory.value.name}"
-        val command = s"""APP_DIR=${baseDirectory.value.name} PORT=${deploy.serverPort.value.get} $path/run.sh"""
+        val variables = Map(
+          "APP_DIR" -> baseDirectory.value.name,
+          "PORT" -> deploy.serverPort.value.get.toString()
+        ) ++ deploy.environmentVariables.value.getOrElse(Map.empty[String, String])
+
+        val command = s"""${variables.toSeq.map(v => s"$v._1=$v._2").mkString(" ")} $path/run.sh"""
 
         val exitCode = ssh.execute(command) ! log
         if(exitCode != 0) {
