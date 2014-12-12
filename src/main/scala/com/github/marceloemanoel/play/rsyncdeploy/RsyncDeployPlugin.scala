@@ -27,6 +27,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     }
 
     lazy val rsyncDeploy = taskKey[Unit]("Connects to the server and send the files using rsync")
+    lazy val stageDeploy = taskKey[Unit]("Call stage task and send resulting files using rsync")
   }
 
   import autoImport._
@@ -63,6 +64,26 @@ object RsyncDeployPlugin extends AutoPlugin {
 
     deploy.excludes := None,
     deploy.displayProgress := true,
+
+    stageDeploy := {
+      implicit val log = streams.value.log
+      log.info("Creating stage artifacts")
+
+      val rsync = Rsync(
+        remotePath = deploy.remotePath.value.get,
+        serverAddress = deploy.serverAddress.value,
+        username = deploy.userName.value,
+        keyFile = deploy.keyFile.value,
+        directory = target(_ / "universal/stage" ).value,
+        displayProgress = deploy.displayProgress.value,
+        excludes = deploy.defaultExcludes.value ++ deploy.excludes.value.getOrElse(Nil)
+      )
+
+      val exitCode = rsync.execute() ! log
+      if(exitCode != 0) {
+        fail
+      }
+    },
 
     rsyncDeploy := {
       implicit val log = streams.value.log
