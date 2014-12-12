@@ -17,7 +17,7 @@ case class Rsync( remotePath: String,
                     includedFiles ++
                     excludedFiles ++
                     displayProgressOption ++
-                    List("--delete", s"${directory.absolutePath}", s"$username@$serverAddress:${remotePath}")
+                    List("--delete", s"${directory.absolutePath}/", s"$username@$serverAddress:${remotePath}")
 
     logger.debug(arguments.mkString(" "))
 
