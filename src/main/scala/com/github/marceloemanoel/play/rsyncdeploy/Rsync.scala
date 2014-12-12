@@ -8,11 +8,13 @@ case class Rsync( remotePath: String,
                   keyFile: Option[File],
                   directory: File,
                   displayProgress: Boolean,
-                  excludes: Seq[String]) {
+                  excludes: Seq[String],
+                  includes: Option[Seq[String]] = None) {
 
   def execute()(implicit logger:Logger): ProcessBuilder = {
     val arguments = List("rsync", "-Chravzp", "--executability") ++
                     sshArguments ++
+                    includedFiles ++
                     excludedFiles ++
                     displayProgressOption ++
                     List("--delete", s"${directory.absolutePath}", s"$username@$serverAddress:${remotePath}")
@@ -29,7 +31,10 @@ case class Rsync( remotePath: String,
     } getOrElse(Nil)
 
   private def excludedFiles() =
-    excludes.map(Seq("--exclude", _)).flatten
+    excludes.flatMap(Seq("--exclude", _))
+
+  private def includedFiles() =
+    includes.map(args => args.flatMap(Seq("--include", _))).getOrElse(Nil)
 
   private def displayProgressOption() =
     if (displayProgress) List("--progress") else Nil
