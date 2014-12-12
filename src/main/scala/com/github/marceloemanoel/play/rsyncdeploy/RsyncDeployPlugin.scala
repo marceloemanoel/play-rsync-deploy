@@ -41,7 +41,7 @@ object RsyncDeployPlugin extends AutoPlugin {
     deploy.serverAddress := "localhost",
     deploy.connectionPort := None,
     deploy.serverPort := Some(9000),
-    deploy.remotePath := Some("~"),
+    deploy.remotePath := Some(s"~/${baseDirectory.value}"),
     deploy.environmentVariables := None,
 
     deploy.keyDir := {
