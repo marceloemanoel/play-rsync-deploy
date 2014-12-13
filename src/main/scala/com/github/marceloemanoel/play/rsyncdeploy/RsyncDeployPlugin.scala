@@ -68,6 +68,17 @@ object RsyncDeployPlugin extends AutoPlugin {
     stageDeploy := {
       implicit val log = streams.value.log
       log.info("Creating stage artifacts")
+      val runScript = baseDirectory.value / "run.sh"
+
+      if(!runScript.exists) {
+        log.info("Creating run.sh script")
+        copyRunScript(runScript)
+      }
+
+      if(!runScript.canExecute) {
+        log.info("Making run.sh executable.")
+        runScript.setExecutable(true)
+      }
 
       val rsync = Rsync(
         remotePath = deploy.remotePath.value.get,
@@ -82,6 +93,27 @@ object RsyncDeployPlugin extends AutoPlugin {
       val exitCode = rsync.execute() ! log
       if(exitCode != 0) {
         fail
+      }
+      else {
+        val ssh = SSH(
+          username = deploy.userName.value,
+          password = deploy.password.value,
+          identityFile = deploy.keyFile.value,
+          port = deploy.connectionPort.value,
+          host = deploy.serverAddress.value
+        )
+        val path = s"${deploy.remotePath.value.get}/${baseDirectory.value.name}"
+        val variables = Map(
+          "APP_DIR" -> baseDirectory.value.name,
+          "PORT" -> deploy.serverPort.value.get.toString()
+        ) ++ deploy.environmentVariables.value.getOrElse(Map.empty[String, String])
+
+        val command = s"""${variables.toSeq.map(v => s"""${v._1}="${v._2}"""").mkString(" ")} $path/run.sh"""
+
+        val exitCode = ssh.execute(command) ! log
+        if(exitCode != 0) {
+          fail
+        }
       }
     },
 
