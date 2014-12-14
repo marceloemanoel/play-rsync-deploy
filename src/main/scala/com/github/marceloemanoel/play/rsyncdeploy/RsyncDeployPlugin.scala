@@ -6,6 +6,9 @@ import scala.language.reflectiveCalls
 import sbt.Keys._
 import sbt._
 
+import com.typesafe.sbt.SbtNativePackager._
+import NativePackagerKeys._
+
 object RsyncDeployPlugin extends AutoPlugin {
 
   object autoImport {
@@ -102,7 +105,7 @@ object RsyncDeployPlugin extends AutoPlugin {
           port = deploy.connectionPort.value,
           host = deploy.serverAddress.value
         )
-        val path = s"${deploy.remotePath.value.get}/${baseDirectory.value.name}"
+        val path = s"${deploy.remotePath.value.get}"
         val variables = Map(
           "APP_DIR" -> baseDirectory.value.name,
           "PORT" -> deploy.serverPort.value.get.toString()
@@ -116,7 +119,7 @@ object RsyncDeployPlugin extends AutoPlugin {
         }
       }
     },
-
+    stageDeploy <<= stageDeploy.dependsOn(clean, stage),
     rsyncDeploy := {
       implicit val log = streams.value.log
       val runScript = baseDirectory.value / "run.sh"
