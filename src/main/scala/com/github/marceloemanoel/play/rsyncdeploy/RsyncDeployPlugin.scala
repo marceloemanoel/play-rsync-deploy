@@ -1,6 +1,6 @@
 package com.github.marceloemanoel.play.rsyncdeploy
 
-import java.io.{InputStream, FileOutputStream}
+import java.io.{FileInputStream, InputStream, FileOutputStream}
 import scala.language.reflectiveCalls
 
 import sbt.Keys._
@@ -71,12 +71,15 @@ object RsyncDeployPlugin extends AutoPlugin {
     stageDeploy := {
       implicit val log = streams.value.log
       log.info("Creating stage artifacts")
+      val userStageScript = baseDirectory(_ / "stage.sh").value
       val stageScript = target(_ / "/universal/stage/stage.sh").value
 
-      if(!stageScript.exists) {
+      if(!userStageScript.exists) {
         log.info("Creating stage.sh script")
-        copyRunScript(stageScript)
+        copyStageScript(userStageScript)
       }
+
+      copy(new FileInputStream(userStageScript))(stageScript)
 
       if(!stageScript.canExecute) {
         log.info("Making stage.sh executable.")
