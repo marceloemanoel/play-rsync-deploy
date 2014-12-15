@@ -21,9 +21,9 @@ repository in bintray := "sbt-plugin-releases"
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-seq(bintraySettings:_*)
+Seq(bintraySettings:_*)
 
-seq(bintrayPublishSettings:_*)
+Seq(bintrayPublishSettings:_*)
 
 bintrayOrganization in bintray := None
 
