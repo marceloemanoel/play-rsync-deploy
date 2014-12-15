@@ -1,6 +1,6 @@
 package com.github.marceloemanoel.play.rsyncdeploy
 
-import java.io.FileOutputStream
+import java.io.{InputStream, FileOutputStream}
 import scala.language.reflectiveCalls
 
 import sbt.Keys._
@@ -71,16 +71,16 @@ object RsyncDeployPlugin extends AutoPlugin {
     stageDeploy := {
       implicit val log = streams.value.log
       log.info("Creating stage artifacts")
-      val runScript = baseDirectory.value / "run.sh"
+      val stageScript = target(_ / "/universal/stage/stage.sh").value
 
-      if(!runScript.exists) {
-        log.info("Creating run.sh script")
-        copyRunScript(runScript)
+      if(!stageScript.exists) {
+        log.info("Creating stage.sh script")
+        copyRunScript(stageScript)
       }
 
-      if(!runScript.canExecute) {
-        log.info("Making run.sh executable.")
-        runScript.setExecutable(true)
+      if(!stageScript.canExecute) {
+        log.info("Making stage.sh executable.")
+        stageScript.setExecutable(true)
       }
 
       val rsync = Rsync(
@@ -120,6 +120,7 @@ object RsyncDeployPlugin extends AutoPlugin {
       }
     },
     stageDeploy <<= stageDeploy.dependsOn(clean, stage),
+
     rsyncDeploy := {
       implicit val log = streams.value.log
       val runScript = baseDirectory.value / "run.sh"
@@ -131,7 +132,7 @@ object RsyncDeployPlugin extends AutoPlugin {
 
       if(!runScript.canExecute) {
         log.info("Making run.sh executable.")
-        runScript.setExecutable(true)
+        stageScript.setExecutable(true)
       }
 
       val rsync = Rsync(
@@ -173,7 +174,15 @@ object RsyncDeployPlugin extends AutoPlugin {
     }
   )
 
+  private def copyStageScript(target: File) = {
+    copy(getClass.getResourceAsStream("/stage.sh"))
+  }
+
   private def copyRunScript(target: File) = {
+    copy(getClass.getResourceAsStream("/run.sh"))
+  }
+
+  private def copy(resource: InputStream): Unit = {
     def use[T <: { def close(): Unit }](closable: T)(block: T => Unit) {
       try {
         block(closable)
@@ -183,12 +192,12 @@ object RsyncDeployPlugin extends AutoPlugin {
       }
     }
 
-    use(getClass.getResourceAsStream("/run.sh")) { input =>
+    use(resource) { input =>
       use(new FileOutputStream(target)) { output =>
         val buffer = new Array[Byte](1024)
         Iterator.continually(input.read(buffer))
-                .takeWhile(_ != -1)
-                .foreach { output.write(buffer, 0 , _) }
+          .takeWhile(_ != -1)
+          .foreach { output.write(buffer, 0 , _) }
       }
     }
   }

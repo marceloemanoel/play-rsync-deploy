@@ -17,7 +17,6 @@ case class SSH(username: String,
                     List(command)
 
     logger.debug(arguments.mkString(" "))
-
     Process(arguments)
   }
 
