@@ -132,7 +132,7 @@ object RsyncDeployPlugin extends AutoPlugin {
 
       if(!runScript.canExecute) {
         log.info("Making run.sh executable.")
-        stageScript.setExecutable(true)
+        runScript.setExecutable(true)
       }
 
       val rsync = Rsync(
@@ -175,14 +175,14 @@ object RsyncDeployPlugin extends AutoPlugin {
   )
 
   private def copyStageScript(target: File) = {
-    copy(getClass.getResourceAsStream("/stage.sh"))
+    copy(getClass.getResourceAsStream("/stage.sh"))(target)
   }
 
   private def copyRunScript(target: File) = {
-    copy(getClass.getResourceAsStream("/run.sh"))
+    copy(getClass.getResourceAsStream("/run.sh"))(target)
   }
 
-  private def copy(resource: InputStream): Unit = {
+  private def copy(resource: InputStream)(target: File): Unit = {
     def use[T <: { def close(): Unit }](closable: T)(block: T => Unit) {
       try {
         block(closable)
