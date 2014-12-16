@@ -122,7 +122,7 @@ object RsyncDeployPlugin extends AutoPlugin {
         }
       }
     },
-    stageDeploy <<= stageDeploy.dependsOn(clean, stage),
+//    stageDeploy <<= stageDeploy.dependsOn(clean, stage),
 
     rsyncDeploy := {
       implicit val log = streams.value.log
